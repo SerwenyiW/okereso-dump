@@ -3,4 +3,4 @@ Oldal: https://okereso.hu/
 Importáld be a kiegésztőknél!
 
 Használat:
-- Nyisd meg ezt az oldalt: https://okereso.hu/iskola/1
+- Nyisd meg ezt az oldalt: https://okereso.hu/search/1
