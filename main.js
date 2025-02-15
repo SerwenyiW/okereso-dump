@@ -1,4 +1,4 @@
-if(window.location.href.toString() === "https://okereso.hu/" || window.location.href.toString().includes("https://okereso.hu/iskola")) {
+if(window.location.href.toString() === "https://okereso.hu/" || window.location.href.toString().includes("https://okereso.hu/search")) {
     const button = document.createElement("button");
     button.style.cssText = "font-size: 30px; width: 150px; height: 100px; color: black; background-color: gray; border: 0;position: absolute; top: 0; z-index: 999";
     button.textContent = "Dump";
@@ -7,7 +7,7 @@ if(window.location.href.toString() === "https://okereso.hu/" || window.location.
             setCookie("odumprunning", "false");
         } else {
             setCookie("odumprunning", "true");
-            window.location.href = "https://okereso.hu/iskola/1";
+            //window.location.href = "https://okereso.hu/search/1";
         }
     });
     document.body.appendChild(button);
@@ -29,44 +29,73 @@ function getCookie(name) {
   return "false";
 }
 
-if(window.location.href.toString().includes("https://okereso.hu/iskola")) {
-    var link = window.location.href.toString().split("iskola/")[1];
+async function init() {
+    if(window.location.href.toString().includes("https://okereso.hu/search")) {
+        var link = window.location.href.toString().split("search/")[1];
 
-    const error = document.querySelector(".error p");
-    if(error) {
-         console.log("Nem jelentkeztek ebbe az iskolába még.");
-         if(getCookie("odumprunning") === "true") window.location.href = "https://okereso.hu/iskola/" + (parseInt(link)+1);
-    }
-
-    const uploaderCards = document.querySelectorAll(".uploader-card");
-    const uploaders = Array.from(uploaderCards).map(card => {
-        const date = card.querySelector(".date").textContent;
-        const name = card.querySelector(".name").textContent;
-        
-        const socials = Array.from(card.querySelectorAll(".socials .social")).map(social => {
-            const platform = social.querySelector("img").src.toString().includes("snapchat") ? "Snapchat: " : social.querySelector("img").src.toString().includes("instagram") ? "Instagram: " : social.querySelector("img").src.toString().includes("tiktok") ? "Tiktok: " : "Facebook: ";
-            const username = social.querySelector("span").textContent;
-            return { platform, username };
-        });
-        const description = card.querySelector(".description .text").textContent;
-        return { date, name, socials, description };
-    });
-
-    for (let u=0;u<uploaders.length;u++) {
-        let user = uploaders[u];
-        let messageBuild = `=================================\nNév: ${user.name}\nIskola: ${document.querySelector(".school-name").textContent}\nSzak: ${user.description.toString()}`;
-        for(let i=0;i<user.socials.length;i++) {
-            messageBuild += `\n${user.socials[i].platform} ${user.socials[i].username}`
+        const vannak = document.querySelector(".z-10.py-5.opacity-50.drop-shadow-2xl");
+        if(vannak.textContent.includes("Nincsenek")) {
+            console.log("Nem jelentkeztek ebbe az iskolába");
+            if(getCookie("odumprunning") === "true") {
+                setTimeout(() => {
+                    window.location.href = "https://okereso.hu/search/" + (parseInt(link) + 1);
+                }, 2000);
+            }
         }
-        messageBuild += "\n=================================";
-        console.log(messageBuild);
-    }
-    console.log(`Ennyien mennek ebbe az iskolába: ${uploaders.length}`);
 
-    if(getCookie("odumprunning") === "true") {
-        setTimeout(()=>{
-            window.location.href = "https://okereso.hu/iskola/" + (parseInt(link)+1);
-        }, 1200);
+        const diakok = document.querySelectorAll('.h-90.my-2.w-full.rounded-3xl.bg-card-100.border-b-\\[5px\\].border-primary\\/85.drop-shadow-2xl.max-w-4xl.p-5');
+        const diak = Array.from(diakok).map(adat => {
+            const nev = adat.querySelector(".pt-3.text-left.font-bold").textContent;
+            const szakma = adat.querySelectorAll(".py-1.text-left")[0].textContent;
+            const magamrol = adat.querySelectorAll(".py-1.text-left")[1].textContent;
+            const eleres = Array.from(adat.querySelectorAll(".flex.flex-wrap.gap-2.py-2 a, .flex.flex-wrap.gap-2.py-2 div")).map(soc => {
+                const nevElem = soc.querySelector('.flex.w-max.items-center.justify-start.gap-2.rounded-3xl.bg-white.p-2.px-5.align-middle.hover\\:scale-105');
+                const nev = nevElem ? nevElem.textContent : "Nincs név";
+        
+                const href = soc.getAttribute("href") || "";
+                let platform = "Facebook: ";
+                if (href.includes("snapchat")) platform = "Snapchat: ";
+                else if (href.includes("instagram")) platform = "Instagram: ";
+                else if (href.includes("tiktok")) platform = "Tiktok: ";
+                return { platform, nev };
+            });
+            console.log(nev);
+            console.log(szakma);
+            return { nev, szakma, magamrol, eleres }
+        });
+       
+        for (let u=0;u<diak.length;u++) {
+            let user = diak[u];
+            let messageBuild = `=================================\nNév: ${user.nev}\nIskola: ${document.querySelector('.z-10.font-primary.text-3xl.font-extrabold.leading-snug.drop-shadow-2xl.\\[text-shadow\\:_0_4px_4px_rgb\\(0_0_0_\\/_0\\.3\\)\\]').textContent}\nSzakma: ${user.szakma}\nMegjegyzés: ${user.magamrol}`;
+            for(let i=0;i<user.eleres.length;i++) {
+                messageBuild += `\n${user.eleres[i].platform} ${user.eleres[i].nev}`
+            }
+            messageBuild += "\n=================================";
+            discorduzenet(messageBuild)
+            diak.splice(u, 1);
+            u--;
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
+        console.log(diak.length);
+        if (diak.length === 0 && getCookie("odumprunning") === "true") {
+            discorduzenet(`Ennyien mennek a **${document.querySelector('.z-10.font-primary.text-3xl.font-extrabold.leading-snug.drop-shadow-2xl.\\[text-shadow\\:_0_4px_4px_rgb\\(0_0_0_\\/_0\\.3\\)\\]').textContent}** iskolába: ${diak.length}`);
+            setTimeout(() => {
+                window.location.href = "https://okereso.hu/search/" + (parseInt(link) + 1);
+            }, 5000);
+        }
     }
 }
+init();
 
+function discorduzenet(messageBuild) {
+    const message = {
+        content: messageBuild,
+        username: "Okereső dumper",
+        avatar_url: "https://cdn.discordapp.com/attachments/1340267513023430747/1340268574664560671/logo-blackboard.png"
+    };
+
+    fetch("DISCORD_WEBHOOK", {method: "POST",headers: { "Content-Type": "application/json"},
+    body: JSON.stringify(message)
+    }).catch(error => console.error("Fetch hiba:", error));
+}
