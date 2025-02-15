@@ -1,4 +1,4 @@
-if(window.location.href.toString() === "https://okereso.hu/" || window.location.href.toString().includes("https://okereso.hu/search")) {
+if(window.location.href.toString().includes("https://okereso.hu/search")) {
     const button = document.createElement("button");
     button.style.cssText = "font-size: 30px; width: 150px; height: 100px; color: black; background-color: gray; border: 0;position: absolute; top: 0; z-index: 999";
     button.textContent = "Dump";
@@ -48,17 +48,25 @@ async function init() {
             const nev = adat.querySelector(".pt-3.text-left.font-bold").textContent;
             const szakma = adat.querySelectorAll(".py-1.text-left")[0].textContent;
             const magamrol = adat.querySelectorAll(".py-1.text-left")[1].textContent;
-            const eleres = Array.from(adat.querySelectorAll(".flex.flex-wrap.gap-2.py-2 a, .flex.flex-wrap.gap-2.py-2 div")).map(soc => {
-                const nevElem = soc.querySelector('.flex.w-max.items-center.justify-start.gap-2.rounded-3xl.bg-white.p-2.px-5.align-middle.hover\\:scale-105');
-                const nev = nevElem ? nevElem.textContent : "Nincs név";
-        
-                const href = soc.getAttribute("href") || "";
-                let platform = "Facebook: ";
-                if (href.includes("snapchat")) platform = "Snapchat: ";
-                else if (href.includes("instagram")) platform = "Instagram: ";
-                else if (href.includes("tiktok")) platform = "Tiktok: ";
-                return { platform, nev };
-            });
+            linkEleres = (selector, isLink = true) => {
+                return Array.from(adat.querySelectorAll(selector)).map(soc => {
+                    const nev = soc.textContent;
+                    let platform = "";
+                    const href = soc.getAttribute("href") || "";
+                    if(isLink) {
+                        if (href.includes("instagram")) platform = "Instagram:";
+                        else if (href.includes("tiktok")) platform = "Tiktok:";
+                    } else {
+                        platform = nev.split(" ").length >= 2 ? "Facebook:" : "Snapchat/Discord:";
+                    }
+                    return { platform, nev };
+                });
+            }
+            
+            const eleres = [
+                ...linkEleres(".flex.flex-wrap.gap-2.py-2 a", true),
+                ...linkEleres(".flex.flex-wrap.gap-2.py-2 div span", false)
+            ];
             console.log(nev);
             console.log(szakma);
             return { nev, szakma, magamrol, eleres }
@@ -66,11 +74,11 @@ async function init() {
        
         for (let u=0;u<diak.length;u++) {
             let user = diak[u];
-            let messageBuild = `=================================\nNév: ${user.nev}\nIskola: ${document.querySelector('.z-10.font-primary.text-3xl.font-extrabold.leading-snug.drop-shadow-2xl.\\[text-shadow\\:_0_4px_4px_rgb\\(0_0_0_\\/_0\\.3\\)\\]').textContent}\nSzakma: ${user.szakma}\nMegjegyzés: ${user.magamrol}`;
+            let messageBuild = `\`\`\`=================================\nNév: ${user.nev}\nIskola: ${document.querySelector('.z-10.font-primary.text-3xl.font-extrabold.leading-snug.drop-shadow-2xl.\\[text-shadow\\:_0_4px_4px_rgb\\(0_0_0_\\/_0\\.3\\)\\]').textContent}\nSzakma: ${user.szakma}\nMegjegyzés: ${user.magamrol}`;
             for(let i=0;i<user.eleres.length;i++) {
                 messageBuild += `\n${user.eleres[i].platform} ${user.eleres[i].nev}`
             }
-            messageBuild += "\n=================================";
+            messageBuild += "\n=================================```";
             discorduzenet(messageBuild)
             diak.splice(u, 1);
             u--;
@@ -78,8 +86,8 @@ async function init() {
         }
 
         console.log(diak.length);
-        if (diak.length === 0 && getCookie("odumprunning") === "true") {
-            discorduzenet(`Ennyien mennek a **${document.querySelector('.z-10.font-primary.text-3xl.font-extrabold.leading-snug.drop-shadow-2xl.\\[text-shadow\\:_0_4px_4px_rgb\\(0_0_0_\\/_0\\.3\\)\\]').textContent}** iskolába: ${diak.length}`);
+        if (diak.length == 0 && getCookie("odumprunning") === "true" && !document.querySelector(".z-10.py-5.opacity-50.drop-shadow-2xl").textContent.includes("Nincsenek")) {
+            discorduzenet(`Ennyien mennek a **${document.querySelector('.z-10.font-primary.text-3xl.font-extrabold.leading-snug.drop-shadow-2xl.\\[text-shadow\\:_0_4px_4px_rgb\\(0_0_0_\\/_0\\.3\\)\\]').textContent}** iskolába: ${document.querySelector(".z-10.py-5.opacity-50.drop-shadow-2xl").textContent}`);
             setTimeout(() => {
                 window.location.href = "https://okereso.hu/search/" + (parseInt(link) + 1);
             }, 5000);
